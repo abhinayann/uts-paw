@@ -16,42 +16,49 @@ export function FilmProvider({ children }) {
   const [error, setError] = useState('')
   const [dataReady, setDataReady] = useState(false)
 
-  // Mengambil data awal dari JSON atau localStorage
   useEffect(() => {
-    async function ambilDataFilm() {
-      try {
-        const response = await fetch('/data/koleksi.json')
+  async function ambilDataFilm() {
+    try {
+      const response = await fetch(
+        `${import.meta.env.BASE_URL}data/koleksi.json`
+      )
 
-        if (!response.ok) {
-          throw new Error('Gagal mengambil data film')
-        }
+      if (!response.ok) {
+        throw new Error('Gagal mengambil data film')
+      }
 
-        const dataJSON = await response.json()
-        const dataTersimpan = localStorage.getItem(STORAGE_KEY)
+      const dataJSON = await response.json()
+      const dataTersimpan = localStorage.getItem(STORAGE_KEY)
 
-        if (dataTersimpan) {
-          try {
-            setFilm(JSON.parse(dataTersimpan))
-          } catch {
-            setFilm(dataJSON)
-          }
-        } else {
+      if (dataTersimpan) {
+        try {
+          const dataLama = JSON.parse(dataTersimpan)
+
+          const dataDenganId = dataLama.map((item, index) => ({
+            ...item,
+            id: item.id ?? index + 1,
+          }))
+
+          setFilm(dataDenganId)
+        } catch {
           setFilm(dataJSON)
         }
-
-        setError('')
-      } catch (err) {
-        setError(err.message)
-      } finally {
-        setLoading(false)
-        setDataReady(true)
+      } else {
+        setFilm(dataJSON)
       }
+
+      setError('')
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+      setDataReady(true)
     }
+  }
 
-    ambilDataFilm()
-  }, [])
+  ambilDataFilm()
+}, [])
 
-  // Menyimpan perubahan koleksi ke localStorage
   useEffect(() => {
     if (dataReady) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(film))

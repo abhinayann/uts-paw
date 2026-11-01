@@ -90,9 +90,9 @@ function DetailFilm() {
   )
 
   function handleHapus() {
-    hapusFilm(id)
-    navigate('/koleksi')
-  }
+  hapusFilm(Number(id))
+  navigate('/koleksi')
+}
 
   if (loading) {
     return (
