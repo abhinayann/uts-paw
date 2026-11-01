@@ -1,10 +1,107 @@
+
 [
   {
-    "id": "1",
-    "judul": "Contoh item pertama",
-    "kategori": "Contoh",
-    "fieldTema1": "ganti sesuai field tema",
-    "fieldTema2": 0,
-    "fieldTema3": "ganti sesuai field tema"
+    "id": 1,
+    "judul": "Interstellar",
+    "kategori": "Film",
+    "sutradara": "Christopher Nolan",
+    "tahunRilis": 2014,
+    "rating": 8.6
+  },
+  {
+    "id": 2,
+    "judul": "The Dark Knight",
+    "kategori": "Film",
+    "sutradara": "Christopher Nolan",
+    "tahunRilis": 2008,
+    "rating": 9.0
+  },
+  {
+    "id": 3,
+    "judul": "Inception",
+    "kategori": "Film",
+    "sutradara": "Christopher Nolan",
+    "tahunRilis": 2010,
+    "rating": 8.8
+  },
+  {
+    "id": 4,
+    "judul": "The Matrix",
+    "kategori": "Film",
+    "sutradara": "Lana Wachowski, Lilly Wachowski",
+    "tahunRilis": 1999,
+    "rating": 8.7
+  },
+  {
+    "id": 5,
+    "judul": "The Shawshank Redemption",
+    "kategori": "Film",
+    "sutradara": "Frank Darabont",
+    "tahunRilis": 1994,
+    "rating": 9.3
+  },
+  {
+    "id": 6,
+    "judul": "The Godfather",
+    "kategori": "Film",
+    "sutradara": "Francis Ford Coppola",
+    "tahunRilis": 1972,
+    "rating": 9.2
+  },
+  {
+    "id": 7,
+    "judul": "Breaking Bad",
+    "kategori": "Serial",
+    "sutradara": "Vince Gilligan",
+    "tahunRilis": 2008,
+    "rating": 9.5
+  },
+  {
+    "id": 8,
+    "judul": "Game of Thrones",
+    "kategori": "Serial",
+    "sutradara": "David Benioff, D. B. Weiss",
+    "tahunRilis": 2011,
+    "rating": 9.3
+  },
+  {
+    "id": 9,
+    "judul": "Stranger Things",
+    "kategori": "Serial",
+    "sutradara": "The Duffer Brothers",
+    "tahunRilis": 2016,
+    "rating": 8.7
+  },
+  {
+    "id": 10,
+    "judul": "The Mandalorian",
+    "kategori": "Serial",
+    "sutradara": "Jon Favreau",
+    "tahunRilis": 2019,
+    "rating": 8.8
+  },
+  {
+    "id": 11,
+    "judul": "The Witcher",
+    "kategori": "Serial",
+    "sutradara": "Lauren Schmidt Hissrich",
+    "tahunRilis": 2019,
+    "rating": 8.2
+  },
+  {
+    "id": 12,
+    "judul": "The Crown",
+    "kategori": "Serial",
+    "sutradara": "Peter Morgan",
+    "tahunRilis": 2016,
+    "rating": 8.7
+  },
+  {
+    "id": 13,
+    "judul": "The Queen's Gambit",
+    "kategori": "Serial",
+    "sutradara": "Scott Frank, Allan Scott",
+    "tahunRilis": 2020,
+    "rating": 8.6
   }
 ]
