@@ -1,0 +1,133 @@
+# Penilaian akhir oleh dosen. Semua kelas dinilai bersamaan secara otomatis pada Senin pagi
+# (setiap fork tetap memakai tenggat kelasnya sendiri), dan bisa dijalankan manual dari tab Actions.
+# Hasil: artifact "rekap-nilai" (rekap.tgz.enc berisi nilai.csv, laporan.md, laporan per mahasiswa,
+# dan manifest-bukti.json) dan "arsip-bukti" (git bundle setiap fork pada commit yang dinilai).
+# Artifact dan log repo publik bisa dibaca siapa pun, jadi nilai dan indikasi selalu terenkripsi
+# dengan grader/kunci-publik.pem; buka dengan: node grader/sandi.mjs buka rekap.tgz.enc <kunci-privat.pem> rekap
+name: Penilaian Ujian Tengah Semester
+
+on:
+  schedule:
+    # Minggu 1 Nov 21.00 UTC = Senin 2 Nov 04.00 WIB, setelah tenggat RB (Minggu 23.59 WIB).
+    # Hasil siap jauh sebelum pukul 07.00. Hapus setelah semester ini selesai.
+    - cron: '0 21 1 11 *'
+  workflow_dispatch:
+    inputs:
+      repo:
+        description: Nilai satu fork saja (contoh USERNAME/uts-paw). Kosongkan untuk semua fork.
+        required: false
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  daftar:
+    if: github.repository == 'mh4Scripts/uts-paw'
+    runs-on: ubuntu-latest
+    outputs:
+      forks: ${{ steps.daftar.outputs.forks }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - id: daftar
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO_INPUT: ${{ inputs.repo }}
+        run: |
+          if [ -n "$REPO_INPUT" ]; then
+            echo "forks=$(node -e 'console.log(JSON.stringify([process.argv[1]]))' "$REPO_INPUT")" >> "$GITHUB_OUTPUT"
+          else
+            echo "forks=$(node grader/periksa.mjs --daftar)" >> "$GITHUB_OUTPUT"
+          fi
+
+  periksa:
+    needs: daftar
+    if: needs.daftar.outputs.forks != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        repo: ${{ fromJSON(needs.daftar.outputs.forks) }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      # Token dan data kelas hanya dipakai untuk menentukan kelas, tenggat, dan commit
+      # yang dinilai. target.json hanya memuat entri data kelas milik mahasiswa ini.
+      # Langkah berikutnya menjalankan kode mahasiswa dan sengaja tidak menerima secret apa pun.
+      - name: Tentukan kelas dan commit sebelum tenggat
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DAFTAR_KELAS: ${{ secrets.DAFTAR_KELAS }}
+          REPO: ${{ matrix.repo }}
+        run: node grader/periksa.mjs --target "$REPO" > "$RUNNER_TEMP/target.json"
+
+      # Kode mahasiswa (npm ci, build, lint, test) berjalan sebagai pengguna "mhs" yang tidak bisa
+      # menulis ke workspace ini; grader mematikan semua prosesnya setelah setiap perintah.
+      - name: Siapkan pengguna terpisah untuk kode mahasiswa
+        run: sudo useradd --create-home mhs
+
+      - name: Nilai
+        env:
+          REPO: ${{ matrix.repo }}
+          UTS_PENGGUNA_UJI: mhs
+        run: |
+          node grader/periksa.mjs --repo "$REPO" --target-file "$RUNNER_TEMP/target.json" --out hasil --sandi grader/kunci-publik.pem
+          echo "ARTIFACT=hasil-${REPO//\//__}" >> "$GITHUB_ENV"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ env.ARTIFACT }}
+          path: hasil/
+          retention-days: 30
+
+  rekap:
+    needs: [daftar, periksa]
+    if: always() && needs.daftar.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: hasil-*
+          merge-multiple: true
+          path: hasil
+      # Job ini tidak menjalankan kode mahasiswa (fork hanya dibaca dari arsip bundle), jadi
+      # aman menerima kunci privat dan modul integritas privat.
+      - name: Rekap
+        env:
+          PENANDA_TERSEMBUNYI: ${{ secrets.PENANDA_TERSEMBUNYI }}
+          KUNCI_REKAP: ${{ secrets.KUNCI_REKAP }}
+          INTEGRITAS_PRIVAT: ${{ secrets.INTEGRITAS_PRIVAT }}
+        run: |
+          if [ -n "$INTEGRITAS_PRIVAT" ]; then
+            printf '%s\n' "$INTEGRITAS_PRIVAT" > "$RUNNER_TEMP/integritas.mjs"
+            export UTS_INTEGRITAS="$RUNNER_TEMP/integritas.mjs"
+          fi
+          node grader/rekap.mjs hasil rekap --sandi grader/kunci-publik.pem
+      - uses: actions/upload-artifact@v7
+        with:
+          name: rekap-nilai
+          path: rekap.tgz.enc
+          retention-days: 90
+      - uses: actions/upload-artifact@v7
+        with:
+          name: arsip-bukti
+          path: hasil/arsip/
+          retention-days: 90
